@@ -11,11 +11,11 @@ contract Lottery{
     AggregatorV3Interface internal ethUSDPriceFeed;
 
     constructor(address _priceFeed) public{
-        usdEntryFee = 50 * 10**8;
+        usdEntryFee = 50 * 10**18;
         ethUSDPriceFeed = AggregatorV3Interface(_priceFeed);
     }
     function enter() public payable {
-        players.push(msg.sender);
+        players.push(payable(msg.sender));
     }
     function getEntrancefee() public view returns(uint256) {
         ( ,int price, , , ) = ethUSDPriceFeed.latestRoundData();

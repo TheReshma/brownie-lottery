@@ -5,5 +5,5 @@ compiler:
     remappings:
       - '@chainlink=smartcontractkit/chainlink-brownie-contracts@0.4.1'
 networks:
-  mainnet-fork:
+  mainnet-fork-dev:
     eth_usd_price_feed: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
