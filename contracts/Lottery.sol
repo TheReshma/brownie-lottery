@@ -4,10 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
-contract Lottery is Ownable{
+contract Lottery is VRFConsumerBase, Ownable{
 
     address payable[] public players;
+    address payable public recentWinner;
     uint256 public usdEntryFee;
     AggregatorV3Interface internal ethUSDPriceFeed;
     enum LOTTERY_STATE {
@@ -16,11 +18,21 @@ contract Lottery is Ownable{
         CALCULATING_WINNER
     }
     LOTTERY_STATE public lottery_state;
+    bytes32 public keyhash;
+    uint256 public fee;
+    uint256 public randomness;
 
-    constructor(address _priceFeed) public{
+    constructor(address _priceFeed,
+        address _vrfCoordinator,
+        address _link,
+        bytes32 _keyhash,
+        uint256 _fee)
+        VRFConsumerBase(_vrfCoordinator, _link) {
         usdEntryFee = 50 * 10**18;
         ethUSDPriceFeed = AggregatorV3Interface(_priceFeed);
         lottery_state = LOTTERY_STATE.CLOSED;
+        keyhash = _keyhash;
+        fee = _fee;
     }
 
     function enter() public payable {
@@ -39,5 +51,17 @@ contract Lottery is Ownable{
         lottery_state = LOTTERY_STATE.OPEN;
     }
     function endLottery() public onlyOwner{
+        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
+        bytes32 requestId = requestRandomness( keyhash, fee);
+    }
+    function fulfillRandomness( bytes32 _requestId, uint256 _randomness) internal override{
+        require(lottery_state == LOTTERY_STATE.CALCULATING_WINNER, "You aren't there yet" );
+        require(_randomness > 0, "random not found");
+        uint256 indexOfWinner = _randomness % players.length;
+        recentWinner = players[indexOfWinner];
+        recentWinner.transfer(address(this).balance);
+        players = new address payable[](0);
+        lottery_state = LOTTERY_STATE.CLOSED;
+        randomness = _randomness;
     }
 }
