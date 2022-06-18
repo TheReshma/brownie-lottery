@@ -94,9 +94,10 @@ def end_lottery():
     account =  get_account()
     lottery = Lottery[-1]
     fund_with_link(lottery.address)
+    print("Funding the contract with LINK")
     end = lottery.endLottery({"from": account})
     end.wait(1)
-    time.sleep(10)
+    time.sleep(480)
     print(f"{lottery.recentWinner()} is the new winner")
 
 def main():
