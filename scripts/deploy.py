@@ -29,7 +29,11 @@ def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
     VRFCoordinatorMock.deploy(link_token.address, {"from": account})
     print("Deployed!")
 
-def get_account():
+def get_account(index=None, id=None):
+    if index:
+        return accounts[index]
+    if id:
+        return accounts.load(id)
     if (
         network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS
         or network.show_active() in FORKED_LOCAL_ENVIRONMENTS
@@ -60,7 +64,7 @@ def fund_with_link( contract_address, account=None, link_token=None ,amount=1000
 
 def deploy_contract():
     account = get_account()
-    Lottery.deploy(
+    lottery = Lottery.deploy(
         get_contract("eth_usd_price_feed").address,
         get_contract("vrf_coordinator").address,
         get_contract("link_token").address,
@@ -69,6 +73,7 @@ def deploy_contract():
         {"from": account},
         publish_source=config["networks"][network.show_active()].get("verify", False))
     print("Lottery deployed !")
+    return lottery
 
 def start_lottery():
     account =  get_account()
@@ -91,7 +96,7 @@ def end_lottery():
     fund_with_link(lottery.address)
     end = lottery.endLottery({"from": account})
     end.wait(1)
-    time.sleep(60)
+    time.sleep(10)
     print(f"{lottery.recentWinner()} is the new winner")
 
 def main():
